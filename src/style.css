@@ -68,8 +68,9 @@ body:has(#app[data-phase="go"]) { background: var(--go); }
 }
 
 #big {
-  font-size: clamp(64px, 21vw, 150px);
+  font-size: clamp(56px, 20vw, 150px);
   font-weight: 900;
+  white-space: nowrap; /* never wrap; main.ts shrinks the font instead (fitBig) */
   line-height: 1;
   letter-spacing: 0.01em;
   font-variant-numeric: tabular-nums;

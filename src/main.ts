@@ -238,7 +238,23 @@ function render(): void {
       mainBtn.textContent = "Done";
       break;
   }
+  fitBig();
 }
+
+/** Shrink the big text if it is wider than its box (narrow phones, wide system fonts). */
+function fitBig(): void {
+  big.style.fontSize = "";
+  const range = document.createRange();
+  range.selectNodeContents(big);
+  // Measure the rendered text itself: centred text overflows on both sides, which scrollWidth misses.
+  const overflow = range.getBoundingClientRect().width / (big.clientWidth * 0.96);
+  if (overflow > 1) {
+    big.style.fontSize = `${parseFloat(getComputedStyle(big).fontSize) / overflow}px`;
+  }
+}
+
+window.addEventListener("resize", fitBig);
+void document.fonts?.ready.then(fitBig);
 
 mainBtn.addEventListener("click", () => {
   switch (phase) {
