@@ -6,7 +6,7 @@ A random **"Ready? … Go!"** start signal for armwrestling, as a mobile-friendl
 to install it like an app.
 
 1. Set the *wait before READY* and the *pause READY → GO* range with the sliders.
-2. Press **Start** — or turn on **Clap to start**, press **Listen** and clap.
+2. Press **Start** — or (default) with **Start by sound** on, press **Listen** and make some noise.
 3. The app waits, says **"Ready?"**, waits a uniformly random pause within the range
    (crypto RNG), then says **"Go!"**. The screen turns yellow on READY and green on GO;
    the pause that was drawn is shown afterwards.
@@ -17,9 +17,9 @@ jitter, and the screen is shifted by the reported output latency to match what y
 hear. **Stop** cancels a running round (e.g. on a foul). Space/Enter work as the
 button on a keyboard.
 
-## Clap to start
+## Start by sound
 
-Fires when the microphone level (RMS over ~20 ms) goes above the *clap loudness*
+Fires when the microphone level (RMS over ~20 ms) goes above the *loudness needed*
 slider — a clap, a shout or a slap on the table. A live meter shows the level while
 listening. The mic is closed as soon as the round starts and is not re-armed
 automatically (the shouting during a match would immediately re-trigger it).
@@ -32,7 +32,7 @@ Vite + TypeScript, no framework.
 ```
 src/main.ts    state machine (idle → listening → countdown → ready → go) + UI
 src/audio.ts   AudioContext, cue loading/scheduling, iOS audio-session handling
-src/clap.ts    clap / loud-sound detection
+src/noise.ts   loud-sound detection (clap, shout, table bang)
 src/style.css  referee-shirt look, sliders
 public/sounds  ready.wav / go.wav (generated with macOS `say`, see below)
 ```

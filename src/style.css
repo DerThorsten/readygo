@@ -9,7 +9,7 @@
   --stop: #e5484d;
   --accent: #ffffff;
   --track: #3a3a3a;
-  --stripe: clamp(18px, 5vw, 32px);
+  --stripe: clamp(36px, 10vw, 64px);
   color-scheme: dark;
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
@@ -25,10 +25,10 @@ html, body {
   overscroll-behavior: none;
 }
 
-/* Referee shirt: black and white vertical stripes. */
+/* Referee shirt: wide black and white stripes at 45°. */
 body {
   background: var(--black)
-    repeating-linear-gradient(90deg, var(--black) 0 var(--stripe), var(--white) var(--stripe) calc(2 * var(--stripe)))
+    repeating-linear-gradient(45deg, var(--black) 0 var(--stripe), var(--white) var(--stripe) calc(2 * var(--stripe)))
     fixed;
 }
 body:has(#app[data-phase="ready"]) { background: var(--ready); }
@@ -160,7 +160,7 @@ body:has(#app[data-phase="go"]) { background: var(--go); }
 .label.small { font-weight: 500; font-size: 14px; color: var(--muted); }
 .value { font-weight: 800; font-size: 18px; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .hint { margin: 6px 0 0; color: var(--muted); font-size: 13px; }
-#clap-options { margin-top: 12px; }
+#sound-options { margin-top: 12px; }
 
 /* ------------------------------------------------------------ sliders */
 

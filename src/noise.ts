@@ -1,4 +1,4 @@
-// Hands-free start: fires when the microphone level goes above a threshold
+// Start by sound: fires when the microphone level goes above a threshold
 // (a clap, a shout, slapping the table).
 
 import { audioContext, setAudioSession } from "./audio";
@@ -7,7 +7,7 @@ export interface Listener {
   stop(): void;
 }
 
-export async function listenForClap(opts: {
+export async function listenForNoise(opts: {
   threshold: () => number; // 0..1, read live so the slider can be adjusted while armed
   holdMs?: number;
   onLevel: (level: number) => void;

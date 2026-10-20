@@ -1,6 +1,6 @@
 import "./style.css";
 import { audioContext, loadCues, scheduleCue, unlockAudio, type SoundStyle } from "./audio";
-import { listenForClap, type Listener } from "./clap";
+import { listenForNoise, type Listener } from "./noise";
 
 // ---------------------------------------------------------------- settings
 
@@ -9,7 +9,7 @@ interface Settings {
   minDelay: number;
   maxDelay: number;
   sound: SoundStyle;
-  clapStart: boolean;
+  soundStart: boolean;
   threshold: number;
 }
 
@@ -18,11 +18,11 @@ const DEFAULTS: Settings = {
   minDelay: 1,
   maxDelay: 3,
   sound: "voice",
-  clapStart: false,
+  soundStart: true,
   threshold: 0.7,
 };
 
-const STORAGE_KEY = "readygo.settings.v2";
+const STORAGE_KEY = "readygo.settings.v3";
 
 function loadSettings(): Settings {
   try {
@@ -57,8 +57,8 @@ const preWait = $<HTMLInputElement>("pre-wait");
 const minDelay = $<HTMLInputElement>("min-delay");
 const maxDelay = $<HTMLInputElement>("max-delay");
 const pauseRange = $("pause-range");
-const clap = $<HTMLInputElement>("clap");
-const clapOptions = $("clap-options");
+const soundStart = $<HTMLInputElement>("sound-start");
+const soundOptions = $("sound-options");
 const threshold = $<HTMLInputElement>("threshold");
 const soundButtons = document.querySelectorAll<HTMLButtonElement>("[data-sound]");
 
@@ -157,12 +157,12 @@ function cancelRound(): void {
   setPhase("idle");
 }
 
-// ---------------------------------------------------------------- clap to start
+// ---------------------------------------------------------------- start by sound
 
 async function startListening(): Promise<void> {
   try {
     await unlockAudio(); // we are inside the button's click handler – unlock now
-    listener = await listenForClap({
+    listener = await listenForNoise({
       threshold: () => settings.threshold,
       onLevel: (l) => (meterFill.style.width = `${l * 100}%`),
       onTrigger: () => void startRound(),
@@ -213,14 +213,14 @@ function render(): void {
       sub.textContent =
         lastDelay !== null
           ? `Last pause ${lastDelay.toFixed(2)} s`
-          : settings.clapStart
-            ? "Press listen, then clap"
+          : settings.soundStart
+            ? "Press listen, then make some noise"
             : "Press start";
-      mainBtn.textContent = settings.clapStart ? "Listen" : "Start";
+      mainBtn.textContent = settings.soundStart ? "Listen" : "Start";
       break;
     case "listening":
       big.textContent = "👏";
-      sub.textContent = "Clap to start";
+      sub.textContent = "Make some noise!";
       mainBtn.textContent = "Cancel";
       break;
     case "countdown":
@@ -243,7 +243,7 @@ function render(): void {
 mainBtn.addEventListener("click", () => {
   switch (phase) {
     case "idle":
-      if (settings.clapStart) void startListening();
+      if (settings.soundStart) void startListening();
       else void startRound();
       break;
     case "listening":
@@ -271,7 +271,7 @@ function writeInputs(): void {
   minDelay.value = String(settings.minDelay);
   maxDelay.value = String(settings.maxDelay);
   threshold.value = String(settings.threshold);
-  clap.checked = settings.clapStart;
+  soundStart.checked = settings.soundStart;
 
   $("pre-wait-out").textContent = settings.preWait === 0 ? "none" : seconds(settings.preWait);
   $("pause-out").textContent =
@@ -290,7 +290,7 @@ function writeInputs(): void {
   meterThreshold.style.left = `${settings.threshold * 100}%`;
 
   for (const b of soundButtons) b.setAttribute("aria-checked", String(b.dataset.sound === settings.sound));
-  clapOptions.hidden = !settings.clapStart;
+  soundOptions.hidden = !settings.soundStart;
 }
 
 function update(): void {
@@ -326,9 +326,9 @@ threshold.addEventListener("input", () => {
   update();
 });
 
-clap.addEventListener("change", () => {
-  settings.clapStart = clap.checked;
-  if (!clap.checked && phase === "listening") {
+soundStart.addEventListener("change", () => {
+  settings.soundStart = soundStart.checked;
+  if (!soundStart.checked && phase === "listening") {
     stopListening();
     setPhase("idle");
   }

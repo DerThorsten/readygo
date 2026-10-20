@@ -63,17 +63,17 @@
 
         <div class="setting">
           <label class="row switch">
-            <span class="label">Clap to start</span>
-            <input id="clap" type="checkbox" role="switch" />
+            <span class="label">Start by sound</span>
+            <input id="sound-start" type="checkbox" role="switch" />
             <span class="knob" aria-hidden="true"></span>
           </label>
-          <div id="clap-options">
+          <div id="sound-options">
             <div class="row">
-              <span class="label small">Clap loudness needed</span>
+              <span class="label small">Loudness needed</span>
               <output id="threshold-out" class="value"></output>
             </div>
-            <input id="threshold" class="slider" type="range" min="0.2" max="0.98" step="0.01" aria-label="Clap loudness needed" />
-            <p class="hint">Press Listen and clap. If it starts on its own, move the slider right.</p>
+            <input id="threshold" class="slider" type="range" min="0.2" max="0.98" step="0.01" aria-label="Loudness needed" />
+            <p class="hint">Press Listen, then clap, shout or bang the table. If it starts on its own, move the slider right.</p>
           </div>
         </div>
       </section>
