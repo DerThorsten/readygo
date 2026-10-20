@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+    <meta name="theme-color" content="#111418" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="icon" href="./icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="./icon-192.png" />
+    <title>ReadyGo</title>
+  </head>
+  <body>
+    <main id="app" data-phase="idle">
+      <section id="stage" aria-live="assertive">
+        <div id="big">READY?</div>
+        <div id="sub">Press start</div>
+      </section>
+
+      <section id="controls">
+        <div id="meter" hidden>
+          <div id="meter-fill"></div>
+          <div id="meter-threshold"></div>
+        </div>
+        <button id="main-btn" type="button">Start</button>
+      </section>
+
+      <details id="settings" open>
+        <summary>Settings</summary>
+
+        <fieldset>
+          <legend>Timing (seconds)</legend>
+          <label>Wait before READY <input id="pre-wait" type="number" min="0" max="60" step="0.5" inputmode="decimal" /></label>
+          <label>READY → GO min <input id="min-delay" type="number" min="0" max="30" step="0.1" inputmode="decimal" /></label>
+          <label>READY → GO max <input id="max-delay" type="number" min="0" max="30" step="0.1" inputmode="decimal" /></label>
+          <p class="hint">The pause after “Ready” is drawn uniformly at random between min and max.</p>
+        </fieldset>
+
+        <fieldset>
+          <legend>Signal</legend>
+          <label>Sound
+            <select id="sound">
+              <option value="voice">Voice (“Ready? … Go!”)</option>
+              <option value="beep">Beeps</option>
+            </select>
+          </label>
+          <label class="check"><input id="vibrate" type="checkbox" /> Vibrate on GO</label>
+        </fieldset>
+
+        <fieldset>
+          <legend>Hands-free start</legend>
+          <label>Trigger
+            <select id="voice-mode">
+              <option value="off">Off – use the button</option>
+              <option value="sound">Loud sound (clap / shout)</option>
+              <option value="word">Spoken word</option>
+            </select>
+          </label>
+          <label data-for="sound">Sensitivity threshold <input id="threshold" type="range" min="0.2" max="0.98" step="0.01" /></label>
+          <label data-for="word">Keyword <input id="keyword" type="text" autocomplete="off" autocapitalize="none" /></label>
+          <p class="hint" id="voice-hint"></p>
+        </fieldset>
+      </details>
+    </main>
+    <script type="module" src="./src/main.ts"></script>
+  </body>
+</html>

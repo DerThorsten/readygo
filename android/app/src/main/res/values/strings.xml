@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">ReadyGo</string>
+    <string name="title_activity_main">ReadyGo</string>
+    <string name="package_name">net.quantstack.readygo</string>
+    <string name="custom_url_scheme">net.quantstack.readygo</string>
+</resources>
