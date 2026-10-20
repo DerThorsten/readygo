@@ -55,6 +55,13 @@ npm run build          # type-check + production build to dist/
 Microphone access in a browser needs a secure context: `localhost` is fine,
 for a phone on your LAN use HTTPS (or deploy `dist/` to any static host).
 
+### Web (GitHub Pages)
+
+Every push to `main` builds and deploys to
+<https://derthorsten.github.io/readygo/> via `.github/workflows/pages.yml`
+(repo Settings → Pages → Source must be "GitHub Actions"). Open it on a phone and
+use "Add to Home Screen" to install it as an app.
+
 ### Android
 
 Requires Android Studio (JDK + SDK).
