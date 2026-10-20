@@ -48,21 +48,33 @@ async function loadVoice(name: "ready" | "go"): Promise<AudioBuffer> {
   if (hit) return hit;
   const res = await fetch(`./sounds/${name}.wav`);
   const decoded = await audioContext().decodeAudioData(await res.arrayBuffer());
-  const trimmed = trimLeadingSilence(decoded);
-  cache.set(key, trimmed);
-  return trimmed;
+  const prepared = prepareVoice(decoded);
+  cache.set(key, prepared);
+  return prepared;
 }
 
-/** Text-to-speech output has some leading silence; cut it so the cue starts exactly on time. */
-function trimLeadingSilence(buf: AudioBuffer, threshold = 0.02): AudioBuffer {
+/**
+ * Cut leading and trailing silence (so the cue starts exactly on time and its duration is
+ * the audible part only) and normalise to full volume so the call is loud and punchy.
+ */
+function prepareVoice(buf: AudioBuffer, threshold = 0.02): AudioBuffer {
   const data = buf.getChannelData(0);
   let start = 0;
   while (start < data.length && Math.abs(data[start]) < threshold) start++;
-  start = Math.max(0, start - Math.floor(buf.sampleRate * 0.005));
-  if (start === 0) return buf;
-  const out = audioContext().createBuffer(buf.numberOfChannels, buf.length - start, buf.sampleRate);
+  let end = data.length;
+  while (end > start && Math.abs(data[end - 1]) < threshold) end--;
+  const pad = Math.floor(buf.sampleRate * 0.005);
+  start = Math.max(0, start - pad);
+  end = Math.min(data.length, end + pad);
+
+  let peak = 0;
+  for (let i = start; i < end; i++) peak = Math.max(peak, Math.abs(data[i]));
+  const gain = peak > 0 ? 0.95 / peak : 1;
+
+  const out = audioContext().createBuffer(buf.numberOfChannels, end - start, buf.sampleRate);
   for (let ch = 0; ch < buf.numberOfChannels; ch++) {
-    out.copyToChannel(buf.getChannelData(ch).subarray(start), ch);
+    const src = buf.getChannelData(ch).subarray(start, end);
+    out.copyToChannel(src.map((s) => s * gain), ch);
   }
   return out;
 }

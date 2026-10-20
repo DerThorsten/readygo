@@ -1,5 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="96" fill="#111418"/>
-  <circle cx="256" cy="256" r="176" fill="#19c35a"/>
-  <path d="M206 168 L366 256 L206 344 Z" fill="#111418"/>
+  <defs>
+    <pattern id="s" width="128" height="512" patternUnits="userSpaceOnUse">
+      <rect width="64" height="512" fill="#111"/>
+      <rect x="64" width="64" height="512" fill="#f5f5f2"/>
+    </pattern>
+    <clipPath id="r"><rect width="512" height="512" rx="96"/></clipPath>
+  </defs>
+  <g clip-path="url(#r)">
+    <rect width="512" height="512" fill="url(#s)"/>
+    <circle cx="256" cy="256" r="150" fill="#16c55b" stroke="#111" stroke-width="22"/>
+    <text x="256" y="300" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-weight="900" font-size="128" fill="#111">GO</text>
+  </g>
 </svg>

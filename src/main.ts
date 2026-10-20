@@ -1,6 +1,6 @@
 import "./style.css";
 import { audioContext, loadCues, scheduleCue, unlockAudio, type SoundStyle } from "./audio";
-import { listenForSound, listenForWord, wordRecognitionSupported, type Listener, type VoiceMode } from "./voice";
+import { listenForClap, type Listener } from "./clap";
 
 // ---------------------------------------------------------------- settings
 
@@ -9,10 +9,8 @@ interface Settings {
   minDelay: number;
   maxDelay: number;
   sound: SoundStyle;
-  vibrate: boolean;
-  voiceMode: VoiceMode;
+  clapStart: boolean;
   threshold: number;
-  keyword: string;
 }
 
 const DEFAULTS: Settings = {
@@ -20,13 +18,11 @@ const DEFAULTS: Settings = {
   minDelay: 1,
   maxDelay: 3,
   sound: "voice",
-  vibrate: true,
-  voiceMode: "off",
+  clapStart: false,
   threshold: 0.7,
-  keyword: "start",
 };
 
-const STORAGE_KEY = "readygo.settings.v1";
+const STORAGE_KEY = "readygo.settings.v2";
 
 function loadSettings(): Settings {
   try {
@@ -56,18 +52,15 @@ const mainBtn = $<HTMLButtonElement>("main-btn");
 const meter = $("meter");
 const meterFill = $("meter-fill");
 const meterThreshold = $("meter-threshold");
-const settingsPanel = $<HTMLDetailsElement>("settings");
-const inputs = {
-  preWait: $<HTMLInputElement>("pre-wait"),
-  minDelay: $<HTMLInputElement>("min-delay"),
-  maxDelay: $<HTMLInputElement>("max-delay"),
-  sound: $<HTMLSelectElement>("sound"),
-  vibrate: $<HTMLInputElement>("vibrate"),
-  voiceMode: $<HTMLSelectElement>("voice-mode"),
-  threshold: $<HTMLInputElement>("threshold"),
-  keyword: $<HTMLInputElement>("keyword"),
-};
-const voiceHint = $("voice-hint");
+const settingsPanel = $("settings");
+const preWait = $<HTMLInputElement>("pre-wait");
+const minDelay = $<HTMLInputElement>("min-delay");
+const maxDelay = $<HTMLInputElement>("max-delay");
+const pauseRange = $("pause-range");
+const clap = $<HTMLInputElement>("clap");
+const clapOptions = $("clap-options");
+const threshold = $<HTMLInputElement>("threshold");
+const soundButtons = document.querySelectorAll<HTMLButtonElement>("[data-sound]");
 
 // ---------------------------------------------------------------- state
 
@@ -136,7 +129,7 @@ function tick(): void {
   if (now >= round.readyAt) {
     if (phase !== "ready") setPhase("ready");
   } else {
-    sub.textContent = `READY in ${Math.ceil(round.readyAt - now)}`;
+    big.textContent = String(Math.ceil(round.readyAt - now));
   }
   rafId = requestAnimationFrame(tick);
 }
@@ -145,7 +138,6 @@ function enterGo(): void {
   lastDelay = round?.delay ?? null;
   round = null;
   setPhase("go");
-  if (settings.vibrate && "vibrate" in navigator) navigator.vibrate(400);
   goHoldTimer = window.setTimeout(() => setPhase("idle"), 3000);
 }
 
@@ -165,30 +157,16 @@ function cancelRound(): void {
   setPhase("idle");
 }
 
-// ---------------------------------------------------------------- hands-free
+// ---------------------------------------------------------------- clap to start
 
 async function startListening(): Promise<void> {
   try {
     await unlockAudio(); // we are inside the button's click handler – unlock now
-    if (settings.voiceMode === "sound") {
-      listener = await listenForSound({
-        threshold: () => settings.threshold,
-        onLevel: (l) => (meterFill.style.width = `${l * 100}%`),
-        onTrigger: () => void startRound(),
-      });
-    } else {
-      listener = listenForWord({
-        keyword: settings.keyword,
-        lang: navigator.language || "en-US",
-        onHeard: (t) => (sub.textContent = `heard: “${t}”`),
-        onTrigger: () => void startRound(),
-        onError: (msg) => {
-          listener = null;
-          setPhase("idle");
-          sub.textContent = `Speech recognition error: ${msg}`;
-        },
-      });
-    }
+    listener = await listenForClap({
+      threshold: () => settings.threshold,
+      onLevel: (l) => (meterFill.style.width = `${l * 100}%`),
+      onTrigger: () => void startRound(),
+    });
     setPhase("listening");
   } catch (err) {
     listener = null;
@@ -226,24 +204,27 @@ document.addEventListener("visibilitychange", () => {
 // ---------------------------------------------------------------- ui
 
 function render(): void {
-  const hands = settings.voiceMode !== "off";
-  meter.hidden = settings.voiceMode !== "sound" || phase !== "listening";
+  meter.hidden = phase !== "listening";
   settingsPanel.hidden = phase === "countdown" || phase === "ready" || phase === "go";
 
   switch (phase) {
     case "idle":
       big.textContent = "READY?";
       sub.textContent =
-        lastDelay !== null ? `Last pause: ${lastDelay.toFixed(2)} s` : hands ? "Arm the microphone" : "Press start";
-      mainBtn.textContent = hands ? "Listen" : "Start";
+        lastDelay !== null
+          ? `Last pause ${lastDelay.toFixed(2)} s`
+          : settings.clapStart
+            ? "Press listen, then clap"
+            : "Press start";
+      mainBtn.textContent = settings.clapStart ? "Listen" : "Start";
       break;
     case "listening":
-      big.textContent = "…";
-      sub.textContent = settings.voiceMode === "sound" ? "Clap or shout to start" : `Say “${settings.keyword}” to start`;
+      big.textContent = "👏";
+      sub.textContent = "Clap to start";
       mainBtn.textContent = "Cancel";
       break;
     case "countdown":
-      big.textContent = "";
+      sub.textContent = "Get set";
       mainBtn.textContent = "Stop";
       break;
     case "ready":
@@ -254,7 +235,7 @@ function render(): void {
     case "go":
       big.textContent = "GO!";
       sub.textContent = lastDelay !== null ? `pause ${lastDelay.toFixed(2)} s` : "";
-      mainBtn.textContent = "Reset";
+      mainBtn.textContent = "Done";
       break;
   }
 }
@@ -262,8 +243,8 @@ function render(): void {
 mainBtn.addEventListener("click", () => {
   switch (phase) {
     case "idle":
-      if (settings.voiceMode === "off") void startRound();
-      else void startListening();
+      if (settings.clapStart) void startListening();
+      else void startRound();
       break;
     case "listening":
       stopListening();
@@ -274,79 +255,96 @@ mainBtn.addEventListener("click", () => {
   }
 });
 
-// Space / Enter also work as the button on desktop.
+// Space / Enter also work as the button on a keyboard.
 document.addEventListener("keydown", (e) => {
-  if ((e.code === "Space" || e.code === "Enter") && !(e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement)) {
+  if ((e.code === "Space" || e.code === "Enter") && !(e.target instanceof HTMLInputElement)) {
     e.preventDefault();
     mainBtn.click();
   }
 });
 
-function num(input: HTMLInputElement, fallback: number, max: number): number {
-  const v = parseFloat(input.value.replace(",", "."));
-  return Number.isFinite(v) ? Math.min(max, Math.max(0, v)) : fallback;
-}
+const seconds = (v: number) => `${v.toFixed(1)} s`;
 
-function readInputs(source?: EventTarget | null): void {
-  settings.preWait = num(inputs.preWait, settings.preWait, 60);
-  settings.minDelay = num(inputs.minDelay, settings.minDelay, 30);
-  settings.maxDelay = num(inputs.maxDelay, settings.maxDelay, 30);
-  // Keep min <= max, adjusting whichever field the user did not just edit.
-  if (settings.minDelay > settings.maxDelay) {
-    if (source === inputs.maxDelay) settings.minDelay = settings.maxDelay;
-    else settings.maxDelay = settings.minDelay;
-  }
-  settings.sound = inputs.sound.value as SoundStyle;
-  settings.vibrate = inputs.vibrate.checked;
-  settings.voiceMode = inputs.voiceMode.value as VoiceMode;
-  settings.threshold = parseFloat(inputs.threshold.value);
-  settings.keyword = inputs.keyword.value.trim() || DEFAULTS.keyword;
-  saveSettings();
-}
-
+/** Push all settings into the controls and value labels. */
 function writeInputs(): void {
-  inputs.preWait.value = String(settings.preWait);
-  inputs.minDelay.value = String(settings.minDelay);
-  inputs.maxDelay.value = String(settings.maxDelay);
-  inputs.sound.value = settings.sound;
-  inputs.vibrate.checked = settings.vibrate;
-  inputs.voiceMode.value = settings.voiceMode;
-  inputs.threshold.value = String(settings.threshold);
-  inputs.keyword.value = settings.keyword;
+  preWait.value = String(settings.preWait);
+  minDelay.value = String(settings.minDelay);
+  maxDelay.value = String(settings.maxDelay);
+  threshold.value = String(settings.threshold);
+  clap.checked = settings.clapStart;
+
+  $("pre-wait-out").textContent = settings.preWait === 0 ? "none" : seconds(settings.preWait);
+  $("pause-out").textContent =
+    settings.minDelay === settings.maxDelay
+      ? `exactly ${seconds(settings.minDelay)}`
+      : `${settings.minDelay.toFixed(1)} – ${seconds(settings.maxDelay)}`;
+  $("threshold-out").textContent = `${Math.round(settings.threshold * 100)}%`;
+
+  const max = parseFloat(minDelay.max);
+  pauseRange.style.setProperty("--lo", `${(settings.minDelay / max) * 100}%`);
+  pauseRange.style.setProperty("--hi", `${(settings.maxDelay / max) * 100}%`);
+  for (const el of [preWait, threshold]) {
+    const pct = ((parseFloat(el.value) - parseFloat(el.min)) / (parseFloat(el.max) - parseFloat(el.min))) * 100;
+    el.style.setProperty("--fill", `${pct}%`);
+  }
   meterThreshold.style.left = `${settings.threshold * 100}%`;
 
-  for (const el of document.querySelectorAll<HTMLElement>("[data-for]")) {
-    el.hidden = el.dataset.for !== settings.voiceMode;
-  }
-  voiceHint.textContent =
-    settings.voiceMode === "sound"
-      ? "Press Listen, then clap or shout. Watch the meter and move the threshold just above the room noise."
-      : settings.voiceMode === "word"
-        ? wordRecognitionSupported()
-          ? "Uses the browser's speech recognition (may need an internet connection)."
-          : "Speech recognition isn't available in this browser/app – use “Loud sound” instead."
-        : "";
+  for (const b of soundButtons) b.setAttribute("aria-checked", String(b.dataset.sound === settings.sound));
+  clapOptions.hidden = !settings.clapStart;
 }
 
-const wordOption = inputs.voiceMode.querySelector<HTMLOptionElement>('option[value="word"]')!;
-wordOption.disabled = !wordRecognitionSupported();
-if (settings.voiceMode === "word" && !wordRecognitionSupported()) settings.voiceMode = "off";
+function update(): void {
+  saveSettings();
+  writeInputs();
+  if (phase === "idle") render();
+}
 
-for (const el of Object.values(inputs)) {
-  el.addEventListener("change", (e) => {
-    if (phase === "listening" && el !== inputs.threshold) {
-      stopListening();
-      setPhase("idle");
-    }
-    readInputs(e.target);
-    writeInputs();
-    render();
+preWait.addEventListener("input", () => {
+  settings.preWait = parseFloat(preWait.value);
+  update();
+});
+
+// Two overlapping range inputs form the min/max slider; neither handle may pass the other.
+minDelay.addEventListener("input", () => {
+  settings.minDelay = Math.min(parseFloat(minDelay.value), settings.maxDelay);
+  update();
+});
+maxDelay.addEventListener("input", () => {
+  settings.maxDelay = Math.max(parseFloat(maxDelay.value), settings.minDelay);
+  update();
+});
+// When both handles sit on top of each other, keep the one that can still move on top.
+for (const el of [minDelay, maxDelay]) {
+  el.addEventListener("pointerdown", () => {
+    minDelay.style.zIndex = el === minDelay ? "3" : "2";
+    maxDelay.style.zIndex = el === maxDelay ? "3" : "2";
   });
 }
-inputs.threshold.addEventListener("input", () => {
-  settings.threshold = parseFloat(inputs.threshold.value);
-  meterThreshold.style.left = `${settings.threshold * 100}%`;
+
+threshold.addEventListener("input", () => {
+  settings.threshold = parseFloat(threshold.value);
+  update();
 });
+
+clap.addEventListener("change", () => {
+  settings.clapStart = clap.checked;
+  if (!clap.checked && phase === "listening") {
+    stopListening();
+    setPhase("idle");
+  }
+  update();
+});
+
+for (const b of soundButtons) {
+  b.addEventListener("click", () => {
+    settings.sound = b.dataset.sound as SoundStyle;
+    update();
+    // Let the user hear the choice.
+    void unlockAudio()
+      .then(() => loadCues(settings.sound))
+      .then((c) => scheduleCue(c.go, audioContext().currentTime + 0.02));
+  });
+}
 
 writeInputs();
 render();

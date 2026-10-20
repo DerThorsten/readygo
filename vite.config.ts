@@ -1,6 +1,6 @@
 import { defineConfig } from "vite";
 
-// Relative base so the same build works on a web server, inside Capacitor and inside Tauri.
+// Relative base so the build works from any sub-path (e.g. GitHub Pages /readygo/).
 export default defineConfig({
   base: "./",
   server: { host: true, port: 5173, strictPort: true },

@@ -1,5 +1,5 @@
 // Minimal offline support: cache-first for the app shell, refreshed in the background.
-const CACHE = "readygo-v1";
+const CACHE = "readygo-v2";
 
 self.addEventListener("install", () => self.skipWaiting());
 self.addEventListener("activate", (e) => e.waitUntil(self.clients.claim()));

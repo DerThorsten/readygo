@@ -2,9 +2,10 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
-    <meta name="theme-color" content="#111418" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#111111" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="icon" href="./icon.svg" type="image/svg+xml" />
@@ -14,54 +15,68 @@
   <body>
     <main id="app" data-phase="idle">
       <section id="stage" aria-live="assertive">
-        <div id="big">READY?</div>
-        <div id="sub">Press start</div>
+        <div id="board">
+          <div id="big">READY?</div>
+          <div id="sub">Press start</div>
+        </div>
       </section>
 
       <section id="controls">
-        <div id="meter" hidden>
+        <div id="meter" hidden aria-hidden="true">
           <div id="meter-fill"></div>
           <div id="meter-threshold"></div>
         </div>
         <button id="main-btn" type="button">Start</button>
       </section>
 
-      <details id="settings" open>
-        <summary>Settings</summary>
+      <section id="settings" aria-label="Settings">
+        <div class="setting">
+          <div class="row">
+            <span class="label">Wait before READY</span>
+            <output id="pre-wait-out" class="value"></output>
+          </div>
+          <input id="pre-wait" class="slider" type="range" min="0" max="10" step="0.5" aria-label="Wait before READY in seconds" />
+        </div>
 
-        <fieldset>
-          <legend>Timing (seconds)</legend>
-          <label>Wait before READY <input id="pre-wait" type="number" min="0" max="60" step="0.5" inputmode="decimal" /></label>
-          <label>READY → GO min <input id="min-delay" type="number" min="0" max="30" step="0.1" inputmode="decimal" /></label>
-          <label>READY → GO max <input id="max-delay" type="number" min="0" max="30" step="0.1" inputmode="decimal" /></label>
-          <p class="hint">The pause after “Ready” is drawn uniformly at random between min and max.</p>
-        </fieldset>
+        <div class="setting">
+          <div class="row">
+            <span class="label">Pause READY → GO</span>
+            <output id="pause-out" class="value"></output>
+          </div>
+          <div class="dual" id="pause-range">
+            <div class="dual-track"></div>
+            <input id="min-delay" class="slider" type="range" min="0" max="6" step="0.1" aria-label="Minimum pause in seconds" />
+            <input id="max-delay" class="slider" type="range" min="0" max="6" step="0.1" aria-label="Maximum pause in seconds" />
+          </div>
+          <p class="hint">Random each time, anywhere between the two handles.</p>
+        </div>
 
-        <fieldset>
-          <legend>Signal</legend>
-          <label>Sound
-            <select id="sound">
-              <option value="voice">Voice (“Ready? … Go!”)</option>
-              <option value="beep">Beeps</option>
-            </select>
+        <div class="setting">
+          <div class="row">
+            <span class="label">Sound</span>
+            <div class="segmented" role="radiogroup" aria-label="Sound">
+              <button type="button" role="radio" data-sound="voice">Voice</button>
+              <button type="button" role="radio" data-sound="beep">Beep</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="setting">
+          <label class="row switch">
+            <span class="label">Clap to start</span>
+            <input id="clap" type="checkbox" role="switch" />
+            <span class="knob" aria-hidden="true"></span>
           </label>
-          <label class="check"><input id="vibrate" type="checkbox" /> Vibrate on GO</label>
-        </fieldset>
-
-        <fieldset>
-          <legend>Hands-free start</legend>
-          <label>Trigger
-            <select id="voice-mode">
-              <option value="off">Off – use the button</option>
-              <option value="sound">Loud sound (clap / shout)</option>
-              <option value="word">Spoken word</option>
-            </select>
-          </label>
-          <label data-for="sound">Sensitivity threshold <input id="threshold" type="range" min="0.2" max="0.98" step="0.01" /></label>
-          <label data-for="word">Keyword <input id="keyword" type="text" autocomplete="off" autocapitalize="none" /></label>
-          <p class="hint" id="voice-hint"></p>
-        </fieldset>
-      </details>
+          <div id="clap-options">
+            <div class="row">
+              <span class="label small">Clap loudness needed</span>
+              <output id="threshold-out" class="value"></output>
+            </div>
+            <input id="threshold" class="slider" type="range" min="0.2" max="0.98" step="0.01" aria-label="Clap loudness needed" />
+            <p class="hint">Press Listen and clap. If it starts on its own, move the slider right.</p>
+          </div>
+        </div>
+      </section>
     </main>
     <script type="module" src="./src/main.ts"></script>
   </body>
